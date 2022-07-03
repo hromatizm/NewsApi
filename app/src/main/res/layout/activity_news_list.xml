@@ -1,0 +1,26 @@
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal">
+
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/list.fragment"
+        android:name="com.example.newsapi.view.fragments.NewsListFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+
+        android:layout_weight="1"
+        android:tag="first" />
+
+    <View
+        android:layout_width="1dp"
+        android:id="@+id/border.line"
+        android:layout_marginStart="5dp"
+        android:layout_height="match_parent"
+        android:background="@color/black"
+        />
+
+    <include layout="@layout/article_fragment_include"/>
+
+</LinearLayout>
