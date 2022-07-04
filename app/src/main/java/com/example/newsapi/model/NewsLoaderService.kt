@@ -31,11 +31,7 @@ class NewsLoaderService : IntentService("LoadNewsService"), Callback<NewsResult>
     override fun onResponse(call: Call<NewsResult>, response: Response<NewsResult>) {
         response.body()?.run {
             if (status == "ok") {
-                Log.d("zzz", this.status)
-                Log.d("zzz", this.totalResults.toString())
-
                 DBWriteUtil.addAllArticles(this.articles)
-
             } else {
                 Log.d("zzz onResponse Fail", this.status)
             }

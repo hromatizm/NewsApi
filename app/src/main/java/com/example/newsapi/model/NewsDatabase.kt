@@ -4,15 +4,13 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import androidx.room.TypeConverters
 import com.example.newsapi.gson.Article
-import com.example.newsapi.gson.SourceTypeConverter
 
 @Database(
     entities = [Article::class],
     version = 1
 )
-@TypeConverters(SourceTypeConverter::class)
+//@TypeConverters(SourceTypeConverter::class)
 abstract class NewsDatabase : RoomDatabase() {
 
     abstract fun newsDao(): NewsDao

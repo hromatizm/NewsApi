@@ -18,19 +18,13 @@
         android:theme="@style/Theme.NewsApi"
         tools:targetApi="32">
         <activity
-            android:name=".view.activitys.NewsListActivity"
+            android:name=".view.MainActivity"
             android:configChanges="orientation|screenSize"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
-
-        <activity
-            android:name=".view.activitys.ArticleActivity"
-            android:configChanges="orientation|screenSize"
-            android:exported="false">
         </activity>
 
         <service

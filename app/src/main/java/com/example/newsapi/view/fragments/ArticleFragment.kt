@@ -2,36 +2,26 @@ package com.example.newsapi.view.fragments
 
 import android.content.res.Configuration
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.webkit.WebResourceRequest
-import android.webkit.WebView
-import android.webkit.WebViewClient
+import android.webkit.*
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.example.newsapi.R
-import com.example.newsapi.viewmodel.ArticleActivityVM
-import com.example.newsapi.viewmodel.NewsListActivityVM
+import com.example.newsapi.viewmodel.ActivityViewModel
+import com.example.newsapi.viewmodel.ArticleFragmentViewModel
 
 class ArticleFragment : Fragment() {
 
-    // Виджеты
     private lateinit var titleView: TextView
     private lateinit var authorView: TextView
     private lateinit var publishedAtView: TextView
     private lateinit var webView: WebView
 
-    private lateinit var viewModel: ArticleActivityVM
-
-    // Флаги для инициализации подписки на вьюмодель
-    // Чтобы не перегружать WebView при каждом повороте экрана
-    var urlLoadedToNewsListActivityVM = false
-        private set
-    var urlLoadedToArticleActivityVM = false
-        private set
+    private lateinit var activityViewModel: ActivityViewModel
+    private lateinit var fragmentViewModel: ArticleFragmentViewModel
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -45,22 +35,16 @@ class ArticleFragment : Fragment() {
         publishedAtView = view.findViewById(R.id.publishedAt) as TextView
         webView = view.findViewById(R.id.web) as WebView
 
-        webView.webViewClient = object : WebViewClient() {
-            override fun shouldOverrideUrlLoading(
-                view: WebView?,
-                url: WebResourceRequest?
-            ): Boolean {
-                return false
-            }
-        }
-        viewModelInit()
+        setupWebView()
 
-        val orientation = resources.configuration.orientation
-        if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            makeHeaderGone()
-        } else if (orientation == Configuration.ORIENTATION_PORTRAIT) {
-            makeHeaderVisible()
-        }
+        activityViewModel =
+            ViewModelProvider(requireActivity())[ActivityViewModel::class.java]
+        observeActivityViewModel()
+
+        fragmentViewModel =
+            ViewModelProvider(requireActivity())[ArticleFragmentViewModel::class.java]
+        observeFragmentViewModel()
+        fragmentViewModel.onCreateView()
 
         return view
     }
@@ -71,44 +55,45 @@ class ArticleFragment : Fragment() {
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
 
-        viewModelInit()
+        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE)
+            fragmentViewModel.orientationChangedToLandscape()
+        else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT)
+            fragmentViewModel.orientationChangedToPortrait()
+    }
 
-        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            makeHeaderGone()
-        } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
-            makeHeaderVisible()
+    private fun setupWebView() {
+        webView.webViewClient = object : WebViewClient() {
+            // Чтобы страница открывалась не в стороннем браузере:
+            override fun shouldOverrideUrlLoading(
+                view: WebView?,
+                url: WebResourceRequest?
+            ): Boolean {
+                return false
+            }
+            // Сохраняем Cookie
+            override fun onPageFinished(view: WebView?, url: String?) {
+                super.onPageFinished(view, url)
+                CookieManager.getInstance().apply {
+                    setAcceptCookie(true)
+                    acceptCookie()
+                    flush()
+                }
+            }
+        }
+        webView.settings.apply {
+            // Поддержка JS:
+            javaScriptEnabled = true
+            javaScriptCanOpenWindowsAutomatically = true
+            // Поддержка localStorage:
+            databaseEnabled = true
+            domStorageEnabled = true
+            // Кэш:
+            cacheMode = WebSettings.LOAD_CACHE_ELSE_NETWORK
         }
     }
 
-    private fun viewModelInit() {
-
-        val orientation = resources.configuration.orientation
-
-        if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            viewModel = ViewModelProvider(requireActivity())[NewsListActivityVM::class.java]
-        } else if (orientation == Configuration.ORIENTATION_PORTRAIT) {
-            viewModel = ViewModelProvider(requireActivity())[ArticleActivityVM::class.java]
-        }
-
-        val viewModelClass = viewModel.javaClass.simpleName
-// Чтобы WebView не перегружалось при каждом повороте экрана (и сохранялось его состояние)
-// Инициализируем подписку на каждую вьюмодель только один раз по флагу
-        when {
-            viewModelClass == "NewsListActivityVM"
-                    && !urlLoadedToNewsListActivityVM -> {
-                applyViewModel()
-                urlLoadedToNewsListActivityVM = true
-            }
-            viewModelClass == "ArticleActivityVM"
-                    && !urlLoadedToArticleActivityVM -> {
-                applyViewModel()
-                urlLoadedToArticleActivityVM = true
-            }
-        }
-    }
-
-    private fun applyViewModel() {
-        viewModel.apply {
+    private fun observeActivityViewModel() {
+        activityViewModel.apply {
             title.observe(viewLifecycleOwner) { liveData ->
                 titleView.text = liveData
             }
@@ -124,15 +109,17 @@ class ArticleFragment : Fragment() {
         }
     }
 
-    private fun makeHeaderGone(){
-        titleView.visibility = View.GONE
-        authorView.visibility = View.GONE
-        publishedAtView.visibility = View.GONE
-    }
-
-    private fun makeHeaderVisible(){
-        titleView.visibility = View.VISIBLE
-        authorView.visibility = View.VISIBLE
-        publishedAtView.visibility = View.VISIBLE
+    private fun observeFragmentViewModel() {
+        fragmentViewModel.apply {
+            titleViewVisibility.observe(viewLifecycleOwner) { liveData ->
+                titleView.visibility = liveData
+            }
+            authorViewVisibility.observe(viewLifecycleOwner) { liveData ->
+                authorView.visibility = liveData
+            }
+            publishedAtViewVisibility.observe(viewLifecycleOwner) { liveData ->
+                publishedAtView.visibility = liveData
+            }
+        }
     }
 }

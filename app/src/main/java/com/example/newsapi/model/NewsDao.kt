@@ -13,6 +13,9 @@ interface NewsDao {
     @Delete
     fun deleteArticle(vararg articles: Article)
 
+    @Query("SELECT * FROM articles WHERE publishedAt = :publishedAt ORDER BY publishedAt DESC")
+    fun getArticle(publishedAt: String): LiveData<List<Article>>
+
     @Query("SELECT * FROM articles ORDER BY publishedAt DESC")
     fun getAllArticles(): LiveData<List<Article>>
 
